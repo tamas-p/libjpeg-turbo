@@ -719,7 +719,7 @@ _jinit_color_deconverter(j_decompress_ptr cinfo)
     cinfo->out_color_components = rgb_pixelsize[cinfo->out_color_space];
     if (cinfo->jpeg_color_space == JCS_YCbCr) {
 #ifdef WITH_SIMD
-      if (jsimd_set_ycc_rgb(cinfo))
+      if (JSIMD_USED(cinfo, jsimd_set_ycc_rgb(cinfo)))
         cconvert->pub._color_convert = jsimd_color_deconvert;
       else
 #endif
@@ -826,7 +826,7 @@ _jinit_color_deconverter(j_decompress_ptr cinfo)
     if (cinfo->dither_mode == JDITHER_NONE) {
       if (cinfo->jpeg_color_space == JCS_YCbCr) {
 #ifdef WITH_SIMD
-        if (jsimd_set_ycc_rgb565(cinfo))
+        if (JSIMD_USED(cinfo, jsimd_set_ycc_rgb565(cinfo)))
           cconvert->pub._color_convert = jsimd_color_deconvert;
         else
 #endif

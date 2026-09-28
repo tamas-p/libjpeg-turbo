@@ -688,7 +688,7 @@ _jinit_forward_dct(j_compress_ptr cinfo)
   case JDCT_ISLOW:
     fdct->pub._forward_DCT = forward_DCT;
 #ifdef WITH_SIMD
-    if (!jsimd_set_fdct_islow(cinfo, &fdct->dct))
+    if (!JSIMD_USED(cinfo, jsimd_set_fdct_islow(cinfo, &fdct->dct)))
 #endif
       fdct->dct = _jpeg_fdct_islow;
     break;
@@ -697,7 +697,7 @@ _jinit_forward_dct(j_compress_ptr cinfo)
   case JDCT_IFAST:
     fdct->pub._forward_DCT = forward_DCT;
 #ifdef WITH_SIMD
-    if (!jsimd_set_fdct_ifast(cinfo, &fdct->dct))
+    if (!JSIMD_USED(cinfo, jsimd_set_fdct_ifast(cinfo, &fdct->dct)))
 #endif
       fdct->dct = _jpeg_fdct_ifast;
     break;
@@ -706,7 +706,7 @@ _jinit_forward_dct(j_compress_ptr cinfo)
   case JDCT_FLOAT:
     fdct->pub._forward_DCT = forward_DCT_float;
 #ifdef WITH_SIMD
-    if (!jsimd_set_fdct_float(cinfo, &fdct->float_dct))
+    if (!JSIMD_USED(cinfo, jsimd_set_fdct_float(cinfo, &fdct->float_dct)))
 #endif
       fdct->float_dct = jpeg_fdct_float;
     break;
@@ -726,11 +726,11 @@ _jinit_forward_dct(j_compress_ptr cinfo)
 #endif
 #if defined(DCT_ISLOW_SUPPORTED) || defined(DCT_IFAST_SUPPORTED)
 #ifdef WITH_SIMD
-    if (!jsimd_set_convsamp(cinfo, &fdct->convsamp))
+    if (!JSIMD_USED(cinfo, jsimd_set_convsamp(cinfo, &fdct->convsamp)))
 #endif
       fdct->convsamp = convsamp;
 #ifdef WITH_SIMD
-    if (!jsimd_set_quantize(cinfo, &fdct->quantize))
+    if (!JSIMD_USED(cinfo, jsimd_set_quantize(cinfo, &fdct->quantize)))
 #endif
       fdct->quantize = quantize;
     break;
@@ -738,11 +738,11 @@ _jinit_forward_dct(j_compress_ptr cinfo)
 #ifdef DCT_FLOAT_SUPPORTED
   case JDCT_FLOAT:
 #ifdef WITH_SIMD
-    if (!jsimd_set_convsamp_float(cinfo, &fdct->float_convsamp))
+    if (!JSIMD_USED(cinfo, jsimd_set_convsamp_float(cinfo, &fdct->float_convsamp)))
 #endif
       fdct->float_convsamp = convsamp_float;
 #ifdef WITH_SIMD
-    if (!jsimd_set_quantize_float(cinfo, &fdct->float_quantize))
+    if (!JSIMD_USED(cinfo, jsimd_set_quantize_float(cinfo, &fdct->float_quantize)))
 #endif
       fdct->float_quantize = quantize_float;
     break;

@@ -118,7 +118,7 @@ start_pass(j_decompress_ptr cinfo)
       break;
     case 2:
 #ifdef WITH_SIMD
-      if (jsimd_set_idct_2x2(cinfo))
+      if (JSIMD_USED(cinfo, jsimd_set_idct_2x2(cinfo)))
         method_ptr = jsimd_idct_2x2;
       else
 #endif
@@ -131,7 +131,7 @@ start_pass(j_decompress_ptr cinfo)
       break;
     case 4:
 #ifdef WITH_SIMD
-      if (jsimd_set_idct_4x4(cinfo))
+      if (JSIMD_USED(cinfo, jsimd_set_idct_4x4(cinfo)))
         method_ptr = jsimd_idct_4x4;
       else
 #endif
@@ -156,7 +156,7 @@ start_pass(j_decompress_ptr cinfo)
 #ifdef DCT_ISLOW_SUPPORTED
       case JDCT_ISLOW:
 #ifdef WITH_SIMD
-        if (jsimd_set_idct_islow(cinfo))
+        if (JSIMD_USED(cinfo, jsimd_set_idct_islow(cinfo)))
           method_ptr = jsimd_idct_islow;
         else
 #endif
@@ -167,7 +167,7 @@ start_pass(j_decompress_ptr cinfo)
 #ifdef DCT_IFAST_SUPPORTED
       case JDCT_IFAST:
 #ifdef WITH_SIMD
-        if (jsimd_set_idct_ifast(cinfo))
+        if (JSIMD_USED(cinfo, jsimd_set_idct_ifast(cinfo)))
           method_ptr = jsimd_idct_ifast;
         else
 #endif
@@ -178,7 +178,7 @@ start_pass(j_decompress_ptr cinfo)
 #ifdef DCT_FLOAT_SUPPORTED
       case JDCT_FLOAT:
 #ifdef WITH_SIMD
-        if (jsimd_set_idct_float(cinfo))
+        if (JSIMD_USED(cinfo, jsimd_set_idct_float(cinfo)))
           method_ptr = jsimd_idct_float;
         else
 #endif

@@ -864,6 +864,9 @@ DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
   case TJPARAM_SAVEMARKERS:
     SET_PARAM(saveMarkers, 0, 4);
     break;
+  case TJPARAM_SIMD:
+    THROW("TJPARAM_SIMD is read-only.");
+    break;
   default:
     THROW("Invalid parameter");
   }
@@ -932,6 +935,9 @@ DLLEXPORT int tj3Get(tjhandle handle, int param)
     return this->maxPixels;
   case TJPARAM_SAVEMARKERS:
     return this->saveMarkers;
+  case TJPARAM_SIMD:
+    return (int)((this->init & COMPRESS ? this->cinfo.master->simd_used : 0) |
+                 (this->init & DECOMPRESS ? this->dinfo.master->simd_used : 0));
   }
 
   return -1;

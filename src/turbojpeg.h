@@ -993,9 +993,44 @@ enum TJPARAM {
    *   ICC profile that was previously extracted from a JPEG image to the PNG
    *   image.
    */
-  TJPARAM_SAVEMARKERS
+  TJPARAM_SAVEMARKERS,
+  /**
+   * SIMD instructions actually used by the underlying codec [read-only]
+   *
+   * **Value**
+   * - a bitwise OR of one or more of the TJSIMD_* constants, representing
+   * the SIMD extension(s) that the underlying codec has actually used (as
+   * opposed to merely detected as available) to accelerate the compression
+   * and/or decompression operations performed so far with this TurboJPEG
+   * instance, or `0` if no such operations have been performed yet or if
+   * none of them were SIMD-accelerated.  Because different operations (color
+   * conversion, downsampling/upsampling, DCT/IDCT, entropy coding, etc.) can
+   * use different SIMD extensions, this value can be a combination of more
+   * than one TJSIMD_* constant.
+   */
+  TJPARAM_SIMD
 };
 
+/**
+ * @name TJSIMD_* constants
+ * These constants can be bitwise OR'ed together and are returned by
+ * #tj3Get() when it is passed the #TJPARAM_SIMD parameter.  They represent
+ * the CPU SIMD (Single Instruction, Multiple Data) instruction sets that the
+ * underlying codec has used to accelerate JPEG compression and/or
+ * decompression.
+ */
+/* @{ */
+#define TJSIMD_NONE 0x00
+#define TJSIMD_MMX 0x01
+#define TJSIMD_3DNOW 0x02
+#define TJSIMD_SSE 0x04
+#define TJSIMD_SSE2 0x08
+#define TJSIMD_NEON 0x10
+#define TJSIMD_RVV 0x20
+#define TJSIMD_ALTIVEC 0x40
+#define TJSIMD_AVX2 0x80
+#define TJSIMD_MMI 0x100
+/* @} */
 
 /**
  * The number of error codes

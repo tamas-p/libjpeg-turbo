@@ -159,6 +159,43 @@ static char *sigfig(double val, int figs, char *buf, int len)
   return buf;
 }
 
+/* Print the CPU SIMD instruction set(s), if any, used to accelerate the
+   given operation.  This is only printed once per operation type (since it
+   does not change over the lifetime of the process.) */
+static void printSIMD(tjhandle handle, const char *opName) {
+  static int compSIMDShown = 0, decompSIMDShown = 0;
+  int *shown = !strcmp(opName, "Compression") ? &compSIMDShown : &decompSIMDShown;
+  int simd;
+  char buf[80] = "\0";
+
+  if (*shown || quiet)
+    return;
+  *shown = 1;
+
+  simd = tj3Get(handle, TJPARAM_SIMD);
+  if (simd & TJSIMD_MMX)
+    strcat(buf, "MMX ");
+  if (simd & TJSIMD_3DNOW)
+    strcat(buf, "3DNow! ");
+  if (simd & TJSIMD_SSE)
+    strcat(buf, "SSE ");
+  if (simd & TJSIMD_SSE2)
+    strcat(buf, "SSE2 ");
+  if (simd & TJSIMD_NEON)
+    strcat(buf, "NEON ");
+  if (simd & TJSIMD_RVV)
+    strcat(buf, "RVV ");
+  if (simd & TJSIMD_ALTIVEC)
+    strcat(buf, "AltiVec ");
+  if (simd & TJSIMD_AVX2)
+    strcat(buf, "AVX2 ");
+  if (simd & TJSIMD_MMI)
+    strcat(buf, "MMI ");
+  if (buf[0] != '\0')
+    buf[strlen(buf) - 1] = '\0';
+
+  printf("%s CPU acceleration:  %s\n", opName, buf[0] ? buf : "None");
+}
 
 /* Custom DCT filter which produces a negative of the image */
 static int dummyDCTFilter(short *coeffs, tjregion arrayRegion,
@@ -314,6 +351,8 @@ static int decomp(unsigned char **jpegBufs, size_t *jpegSizes, void *dstBuf,
     }
   }  /* while (1) */
   if (doYUV) elapsed -= elapsedDecode;
+
+  printSIMD(handle, "Decompression");
 
   if (quiet) {
     printf("%-6s%s",
@@ -540,6 +579,8 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
       }
     }  /* while (1) */
     if (doYUV) elapsed -= elapsedEncode;
+
+    printSIMD(handle, "Compression");
 
     if (quiet == 1) printf("%-5d  %-5d   ", tilew, tileh);
     if (quiet) {
@@ -937,6 +978,15 @@ static void usage(char *progName)
   printf("    Use bottom-up row order for packed-pixel source/destination buffers\n");
   printf("-componly\n");
   printf("    Stop after running compression tests.  Do not test decompression.\n");
+  printf("-forcesimd {NONE|MMX|3DNOW|SSE|SSE2|NEON|RVV|MMI}\n");
+  printf("    Restrict the underlying codec to using, at most, the specified CPU SIMD\n");
+  printf("    instruction set (this excludes any faster instruction sets that the CPU\n");
+  printf("    and/or codec would otherwise have used) [default = use the fastest\n");
+  printf("    instruction set available].  Specify NONE to disable SIMD acceleration\n");
+  printf("    entirely.  Only the instruction sets slower than the fastest one available\n");
+  printf("    on the host CPU architecture have any effect; the fastest instruction set\n");
+  printf("    (e.g. AVX2 on most modern x86_64 CPUs) is used automatically and does not\n");
+  printf("    need to be, and cannot be, specified here.\n");
   printf("-lossless\n");
   printf("    Generate lossless JPEG images when compressing (implies -subsamp 444).\n");
   printf("    PSV is the predictor selection value (1-7).\n");
@@ -1139,6 +1189,67 @@ int main(int argc, char *argv[])
       } else if (MATCH_ARG(argv[i], "-fastupsample", 6)) {
         printf("Using fastest upsampling algorithm\n\n");
         fastUpsample = 1;
+      } else if (MATCH_ARG(argv[i], "-forcesimd", 6) && i < argc - 1) {
+#ifndef NO_PUTENV
+        static const char *simdNames[] = {
+            "NONE", "MMX", "3DNOW", "SSE", "SSE2", "NEON", "RVV", "MMI"};
+        /* Only these instruction sets actually have any effect on the CPU
+           architecture that this executable was built for. */
+#if defined(__i386__) || defined(_M_IX86)
+        static const char *validNames[] = {"NONE", "MMX", "3DNOW", "SSE",
+                                           "SSE2"};
+#elif defined(__x86_64__) || defined(_M_X64)
+        static const char *validNames[] = {"NONE", "SSE2"};
+#elif defined(__aarch64__) || defined(__arm__) || defined(_M_ARM) || \
+    defined(_M_ARM64)
+        static const char *validNames[] = {"NONE", "NEON"};
+#elif defined(__riscv) && __riscv_xlen == 64
+        static const char *validNames[] = {"NONE", "RVV"};
+#elif defined(__mips64)
+        static const char *validNames[] = {"NONE", "MMI"};
+#else
+        static const char *validNames[] = {"NONE"};
+#endif
+        char envName[16];
+        int j, nameIdx = -1, valid = 0;
+
+        i++;
+        for (j = 0; j < (int)(sizeof(simdNames) / sizeof(simdNames[0])); j++) {
+          if (!strcasecmp(argv[i], simdNames[j])) {
+            nameIdx = j;
+            break;
+          }
+        }
+        if (nameIdx < 0)
+          usage(argv[0]);
+
+        for (j = 0; j < (int)(sizeof(validNames) / sizeof(validNames[0])); j++) {
+          if (!strcasecmp(argv[i], validNames[j])) {
+            valid = 1;
+            break;
+          }
+        }
+        if (!valid) {
+          printf("ERROR: -forcesimd %s has no effect on this CPU architecture.  This\n",
+                 argv[i]);
+          printf("       option can only restrict the codec to a lower-performance\n");
+          printf("       instruction set than the one it would otherwise select\n");
+          printf("       automatically.  The values that have an effect on this\n");
+          printf("       architecture are:");
+          for (j = 0; j < (int)(sizeof(validNames) / sizeof(validNames[0]));
+               j++)
+            printf(" %s", validNames[j]);
+          printf("\n       (the fastest instruction set available is used automatically\n");
+          printf("       and does not need to be, and cannot be, specified here.)\n\n");
+          exit(1);
+        }
+
+        SNPRINTF(envName, sizeof(envName), "JSIMD_FORCE%s", simdNames[nameIdx]);
+        PUTENV_S(envName, "1");
+#else
+        i++;
+        printf("-forcesimd is not supported on this platform\n\n");
+#endif
       } else if (MATCH_ARG(argv[i], "-flip", 2) && i < argc - 1) {
         i++;
         if (MATCH_ARG(argv[i], "horizontal", 1))

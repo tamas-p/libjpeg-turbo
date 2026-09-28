@@ -497,7 +497,7 @@ _jinit_color_converter(j_compress_ptr cinfo)
       cconvert->pub._color_convert = grayscale_convert;
     else if (IsExtRGB(cinfo->in_color_space)) {
 #ifdef WITH_SIMD
-      if (jsimd_set_rgb_gray(cinfo))
+      if (JSIMD_USED(cinfo, jsimd_set_rgb_gray(cinfo)))
         cconvert->pub._color_convert = jsimd_color_convert;
       else
 #endif
@@ -589,7 +589,7 @@ _jinit_color_converter(j_compress_ptr cinfo)
       ERREXIT(cinfo, JERR_BAD_J_COLORSPACE);
     if (IsExtRGB(cinfo->in_color_space)) {
 #ifdef WITH_SIMD
-      if (jsimd_set_rgb_ycc(cinfo))
+      if (JSIMD_USED(cinfo, jsimd_set_rgb_ycc(cinfo)))
         cconvert->pub._color_convert = jsimd_color_convert;
       else
 #endif

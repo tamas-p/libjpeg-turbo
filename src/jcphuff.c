@@ -196,8 +196,8 @@ start_pass_phuff(j_compress_ptr cinfo, boolean gather_statistics)
     else
       entropy->pub.encode_mcu = encode_mcu_AC_first;
 #ifdef WITH_SIMD
-    if (!jsimd_set_encode_mcu_AC_first_prepare(cinfo,
-                                               &entropy->AC_first_prepare))
+    if (!JSIMD_USED(cinfo, jsimd_set_encode_mcu_AC_first_prepare(cinfo,
+                                               &entropy->AC_first_prepare)))
 #endif
       entropy->AC_first_prepare = encode_mcu_AC_first_prepare;
   } else {
@@ -206,8 +206,8 @@ start_pass_phuff(j_compress_ptr cinfo, boolean gather_statistics)
     else {
       entropy->pub.encode_mcu = encode_mcu_AC_refine;
 #ifdef WITH_SIMD
-      if (!jsimd_set_encode_mcu_AC_refine_prepare(cinfo,
-                                                  &entropy->AC_refine_prepare))
+      if (!JSIMD_USED(cinfo, jsimd_set_encode_mcu_AC_refine_prepare(cinfo,
+                                                  &entropy->AC_refine_prepare)))
 #endif
         entropy->AC_refine_prepare = encode_mcu_AC_refine_prepare;
       /* AC refinement needs a correction bit buffer */

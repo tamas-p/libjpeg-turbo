@@ -484,7 +484,7 @@ _jinit_merged_upsampler(j_decompress_ptr cinfo)
   if (cinfo->max_v_samp_factor == 2) {
     upsample->pub._upsample = merged_2v_upsample;
 #ifdef WITH_SIMD
-    if (jsimd_set_h2v2_merged_upsample(cinfo))
+    if (JSIMD_USED(cinfo, jsimd_set_h2v2_merged_upsample(cinfo)))
       upsample->upmethod = jsimd_h2v2_merged_upsample;
     else
 #endif
@@ -530,7 +530,7 @@ _jinit_merged_upsampler(j_decompress_ptr cinfo)
   } else {
     upsample->pub._upsample = merged_1v_upsample;
 #ifdef WITH_SIMD
-    if (jsimd_set_h2v1_merged_upsample(cinfo))
+    if (JSIMD_USED(cinfo, jsimd_set_h2v1_merged_upsample(cinfo)))
       upsample->upmethod = jsimd_h2v1_merged_upsample;
     else
 #endif

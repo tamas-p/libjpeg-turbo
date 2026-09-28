@@ -153,7 +153,7 @@ start_pass_huff(j_compress_ptr cinfo, boolean gather_statistics)
   }
 
 #ifdef WITH_SIMD
-  entropy->simd = jsimd_set_huff_encode_one_block(cinfo);
+  entropy->simd = JSIMD_USED(cinfo, jsimd_set_huff_encode_one_block(cinfo));
 #endif
 
   for (ci = 0; ci < cinfo->comps_in_scan; ci++) {

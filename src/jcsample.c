@@ -518,7 +518,7 @@ _jinit_downsampler(j_compress_ptr cinfo)
       smoothok = FALSE;
 #endif
 #ifdef WITH_SIMD
-      if (jsimd_set_h2v1_downsample(cinfo))
+      if (JSIMD_USED(cinfo, jsimd_set_h2v1_downsample(cinfo)))
         downsample->methods[ci] = jsimd_h2v1_downsample;
       else
 #endif
@@ -533,7 +533,7 @@ _jinit_downsampler(j_compress_ptr cinfo)
 #endif
       {
 #ifdef WITH_SIMD
-        if (jsimd_set_h2v2_downsample(cinfo))
+        if (JSIMD_USED(cinfo, jsimd_set_h2v2_downsample(cinfo)))
           downsample->methods[ci] = jsimd_h2v2_downsample;
         else
 #endif
