@@ -85,12 +85,14 @@ typedef size_t JUINTPTR;
 #define LEFT_SHIFT(a, b)  ((JLONG)((unsigned long)(a) << (b)))
 
 /*
- * Record, in cinfo->master->simd_used, the SIMD extension (if any) selected
- * by a jsimd_set_*() call, and yield that same value.  "call" is evaluated
- * twice, so it must have no side effects other than its return value.
+ * Record and report the SIMD extension (if any) selected by a jsimd_set_*()
+ * call, and yield that same value.
  */
 #define JSIMD_USED(cinfo, call) \
-  ((cinfo)->master->simd_used |= (unsigned int)(call), (call))
+  jsimd_report_used((j_common_ptr)(cinfo), (unsigned int)(call), #call)
+
+EXTERN(unsigned int) jsimd_report_used(j_common_ptr cinfo, unsigned int simd,
+                                       const char *selector);
 
 /* Declarations for compression modules */
 
@@ -109,6 +111,7 @@ struct jpeg_comp_master {
   unsigned int simd_support;
   unsigned int simd_huffman;
   unsigned int simd_used; /* SIMD extensions actually used so far */
+  unsigned int simd_reported; /* SIMD extensions already reported */
 
 #ifdef WITH_PROFILE
   double start, total_start, total_elapsed;
@@ -293,6 +296,7 @@ struct jpeg_decomp_master {
   unsigned int simd_support;
   unsigned int simd_huffman;
   unsigned int simd_used; /* SIMD extensions actually used so far */
+  unsigned int simd_reported; /* SIMD extensions already reported */
 
 #ifdef WITH_PROFILE
   double start, total_start, total_elapsed;

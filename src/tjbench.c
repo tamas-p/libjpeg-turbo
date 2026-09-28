@@ -159,44 +159,6 @@ static char *sigfig(double val, int figs, char *buf, int len)
   return buf;
 }
 
-/* Print the CPU SIMD instruction set(s), if any, used to accelerate the
-   given operation.  This is only printed once per operation type (since it
-   does not change over the lifetime of the process.) */
-static void printSIMD(tjhandle handle, const char *opName) {
-  static int compSIMDShown = 0, decompSIMDShown = 0;
-  int *shown = !strcmp(opName, "Compression") ? &compSIMDShown : &decompSIMDShown;
-  int simd;
-  char buf[80] = "\0";
-
-  if (*shown || quiet)
-    return;
-  *shown = 1;
-
-  simd = tj3Get(handle, TJPARAM_SIMD);
-  if (simd & TJSIMD_MMX)
-    strcat(buf, "MMX ");
-  if (simd & TJSIMD_3DNOW)
-    strcat(buf, "3DNow! ");
-  if (simd & TJSIMD_SSE)
-    strcat(buf, "SSE ");
-  if (simd & TJSIMD_SSE2)
-    strcat(buf, "SSE2 ");
-  if (simd & TJSIMD_NEON)
-    strcat(buf, "NEON ");
-  if (simd & TJSIMD_RVV)
-    strcat(buf, "RVV ");
-  if (simd & TJSIMD_ALTIVEC)
-    strcat(buf, "AltiVec ");
-  if (simd & TJSIMD_AVX2)
-    strcat(buf, "AVX2 ");
-  if (simd & TJSIMD_MMI)
-    strcat(buf, "MMI ");
-  if (buf[0] != '\0')
-    buf[strlen(buf) - 1] = '\0';
-
-  printf("%s CPU acceleration:  %s\n", opName, buf[0] ? buf : "None");
-}
-
 /* Custom DCT filter which produces a negative of the image */
 static int dummyDCTFilter(short *coeffs, tjregion arrayRegion,
                           tjregion planeRegion, int componentIndex,
@@ -351,8 +313,6 @@ static int decomp(unsigned char **jpegBufs, size_t *jpegSizes, void *dstBuf,
     }
   }  /* while (1) */
   if (doYUV) elapsed -= elapsedDecode;
-
-  printSIMD(handle, "Decompression");
 
   if (quiet) {
     printf("%-6s%s",
@@ -579,8 +539,6 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
       }
     }  /* while (1) */
     if (doYUV) elapsed -= elapsedEncode;
-
-    printSIMD(handle, "Compression");
 
     if (quiet == 1) printf("%-5d  %-5d   ", tilew, tileh);
     if (quiet) {

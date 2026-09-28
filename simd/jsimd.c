@@ -112,6 +112,48 @@ init_simd(j_common_ptr cinfo)
   }
 }
 
+GLOBAL(unsigned int)
+jsimd_report_used(j_common_ptr cinfo, unsigned int simd, const char *selector)
+{
+  static const struct {
+    unsigned int flag;
+    const char *name;
+  } simd_names[] = {
+    { JSIMD_MMX, "MMX" },     { JSIMD_3DNOW, "3DNow!" },
+    { JSIMD_SSE, "SSE" },     { JSIMD_SSE2, "SSE2" },
+    { JSIMD_NEON, "NEON" },   { JSIMD_RVV, "RVV" },
+    { JSIMD_ALTIVEC, "AltiVec" }, { JSIMD_AVX2, "AVX2" },
+    { JSIMD_MMI, "MMI" }
+  };
+  unsigned int *used, *reported;
+  unsigned int selected = simd;
+  const char *operation;
+  size_t i;
+
+  if (cinfo->is_decompressor) {
+    j_decompress_ptr dinfo = (j_decompress_ptr)cinfo;
+    used = &dinfo->master->simd_used;
+    reported = &dinfo->master->simd_reported;
+    operation = "Decompression";
+  } else {
+    j_compress_ptr cinfo2 = (j_compress_ptr)cinfo;
+    used = &cinfo2->master->simd_used;
+    reported = &cinfo2->master->simd_reported;
+    operation = "Compression";
+  }
+
+  *used |= selected;
+  simd &= ~*reported;
+  for (i = 0; i < sizeof(simd_names) / sizeof(simd_names[0]); i++) {
+    if (simd & simd_names[i].flag)
+      printf("%s CPU acceleration:  %s selected by %s\n", operation,
+             simd_names[i].name, selector);
+  }
+  *reported |= simd;
+
+  return selected;
+}
+
 
 HIDDEN unsigned int
 jsimd_set_rgb_ycc(j_compress_ptr cinfo)
